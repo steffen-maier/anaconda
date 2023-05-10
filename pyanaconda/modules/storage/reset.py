@@ -28,6 +28,7 @@ from pyanaconda.anaconda_loggers import get_module_logger
 from pyanaconda.core.configuration.anaconda import conf
 from pyanaconda.modules.common.errors.storage import UnusableStorageError
 from pyanaconda.modules.common.task import Task
+from pyanaconda.core.util import execWithRedirect
 
 log = get_module_logger(__name__)
 
@@ -76,6 +77,12 @@ class ScanDevicesTask(Task):
 
         if arch.is_s390():
             zfcp.startup()
+            # Import persistent config of any s390 devices (dasd, zfcp, znet) from
+            # initrd to retain user choices made with rd.dasd, rd.zfcp, rd.znet.
+            execWithRedirect("chzdev",
+                             ["--import", "/run/zdev.initrd.config",
+                              "--persistent",
+                              "--yes", "--no-root-update", "--force", "--verbose"])
 
     def _reset_storage(self, storage):
         """Reset the storage."""
